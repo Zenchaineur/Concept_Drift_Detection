@@ -102,11 +102,19 @@ class PredictionManager():
         
         predict = self.model.predict([self.X[self.index+1]])
 
-        if predict[0] == self.y[self.index+1]:
-            self.prediction = 0
-        else:
-            self.prediction = 1
+        if predict[0] == 1 and self.y[self.index+1] == 1:
+            self.prediction = "TP"
+
+        elif predict[0] == 1 and self.y[self.index+1] == 0:
+            self.prediction = "FP"
             self.nb_errors += 1
+
+        elif predict[0] == 0 and self.y[self.index+1] == 1:
+            self.prediction = "FN"
+            self.nb_errors += 1
+
+        elif predict[0] == 0 and self.y[self.index+1] == 0:
+            self.prediction = "TN"
 
 
     def cdd_step(self):
@@ -142,8 +150,10 @@ class Concept_Drift_Detector():
         self.s_measure = None
 
         # The count of each type of prediction are initialized here : TP = "true positive", FP = "false positive", TN = "true negative", FN = "false negative"
-        self.nb_errors = 0
-        self.size = 0
+        self.TP = 1
+        self.FP = 1
+        self.TN = 1
+        self.FN = 1
 
 
     ### Cdd functions :
@@ -191,15 +201,20 @@ class Concept_Drift_Detector():
     def cd_detection_step(self, value):
 
         # Increment for each count of predictions
-        self.nb_errors += value
-        
-        self.size += 1
+        if(value == "TP"):
+            self.TP += 1
+        elif(value == "FP"):
+            self.FP += 1
+        elif(value == "TN"):
+            self.TN += 1
+        elif(value == "FN"):
+            self.FN += 1
 
         self.s_index += 1
 
-        self.measure = self.nb_errors/self.size
+        self.measure = ( 2 * self.TP ) / ( 2 * self.TP + self.FN + self.FP)
 
-        self.s_measure = math.sqrt ( self.measure * (1 - self.measure) / ( self.size ) )
+        self.s_measure = math.sqrt ( self.measure * (1 - self.measure) / ( self.TP + self.FP + self.TN + self.FN ) )
 
         #print(self.measure, self.s_measure)
 
